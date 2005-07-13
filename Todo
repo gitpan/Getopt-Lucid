@@ -1,0 +1,25 @@
+TODO list for Perl module Getopt::Lucid
+
+#--------------------------------------------------------------------------#
+# Features to add
+#--------------------------------------------------------------------------#
+
+- create spec modifier with coderef to denote a potential command
+- commands() function to give list of command seen on command line
+- dispatch() function to call, in order, the list of commands
+- Usage information in spec and printed by a separate function
+- For keypair validation, pass *both* key and value to a validation 
+  subroutine (allowing custom validation by key)
+- Callbacks (?)
+
+#--------------------------------------------------------------------------#
+# Bugfixes/technical/other
+#--------------------------------------------------------------------------#
+
+- test how negation is handled under $STRICT
+- write cookbook
+- refactor ugly code (module and tests)
+- Allow keypairs to escape an equals sign for use in keys(?) -- e.g.
+  "define is\==value" giving "is=" => "value" (Does anyone really need
+  this?)
+
