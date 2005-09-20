@@ -10,7 +10,7 @@ WriteMakefile
           'PREREQ_PM' => {
                            'Test::More' => '0.48',
                            'Exception::Class' => '1.2',
-                           'Test::Exception' => '0.2',
+                           'Test::Exception' => '0.21',
                            'Storable' => 2,
                            'Exception::Class::TryCatch' => '1.05'
                          }

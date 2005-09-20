@@ -1,6 +1,6 @@
 ---
 name: Getopt-Lucid
-version: 0.11
+version: 0.12
 author:
   - David A Golden <dagolden@cpan.org>
 abstract: 'Clear, readable syntax for command line processing'
@@ -9,16 +9,16 @@ requires:
   Exception::Class: 1.2
   Exception::Class::TryCatch: 1.05
   Storable: 2
-  Test::Exception: 0.2
+  Test::Exception: 0.21
   Test::More: 0.48
   perl: 5.006
 provides:
   Getopt::Lucid:
     file: lib/Getopt/Lucid.pm
-    version: 0.11
+    version: 0.12
   Getopt::Lucid::Exception:
     file: lib/Getopt/Lucid/Exception.pm
-    version: 0.11
+    version: 0.12
   Getopt::Lucid::Spec:
     file: lib/Getopt/Lucid.pm
 generated_by: Module::Build version 0.2702
