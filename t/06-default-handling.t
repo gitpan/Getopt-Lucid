@@ -1,10 +1,5 @@
-#!/usr/bin/perl
 use strict;
-use warnings;
-use blib;  
-
 use Test::More;
-use Test::Exception;
 use Data::Dumper;
 use Exception::Class::TryCatch;
 
@@ -25,7 +20,7 @@ sub why {
 # Test cases
 #--------------------------------------------------------------------------#
 
-our $spec = [
+my $spec = [
     Switch("-t")->default(0),
     Counter("-v")->default(1),
     Param("--file-names")->default("hosts"),
@@ -34,7 +29,7 @@ our $spec = [
     Switch("-x")->default(1),
 ];
 
-our $case = { 
+my $case = { 
     argv    => [ qw( -tvv -I /etc -I /lib -d version=1.0a ) ],
     result  => { 
         t => 1, 
@@ -47,8 +42,7 @@ our $case = {
     desc    => "getopt"
 };
 
-
-our $config1 = { 
+my $config1 = { 
     t => 1, 
     v => 4, 
     "file-names" => "group", 
@@ -57,7 +51,15 @@ our $config1 = {
     z => 1  # extra not in the spec
 };
 
-our $merge_default = {
+# package variables for easier looping by name later
+
+use vars qw( 
+    $merge_default $merge_result
+    $append_default $append_result
+    $replace_default $replace_result
+);
+
+$merge_default = {
     t => 1, 
     v => 4, 
     "file-names" => "group", 
@@ -66,7 +68,7 @@ our $merge_default = {
     x => 1,
 };
 
-our $append_default = {
+$append_default = {
     t => 1, 
     v => 5, 
     "file-names" => "group", 
@@ -75,7 +77,7 @@ our $append_default = {
     x => 1,
 };
 
-our $replace_default = {
+$replace_default = {
     t => 1, 
     v => 4, 
     "file-names" => "group", 
@@ -84,7 +86,7 @@ our $replace_default = {
     x => 0,
 };
 
-our $merge_result = { 
+$merge_result = { 
     t => 1, 
     v => 6, 
     "file-names" => "group", 
@@ -93,7 +95,7 @@ our $merge_result = {
     x => 1,
 };
 
-our $append_result = { 
+$append_result = { 
     t => 1, 
     v => 7, 
     "file-names" => "group", 
@@ -102,7 +104,7 @@ our $append_result = {
     x => 1,
 };
 
-our $replace_result = { 
+$replace_result = { 
     t => 1, 
     v => 6, 
     "file-names" => "group", 

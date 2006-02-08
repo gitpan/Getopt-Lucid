@@ -1,8 +1,8 @@
 package Getopt::Lucid::Exception;
-use 5.006;
+$VERSION = "0.14";
+
+use 5.005;
 use strict;
-use warnings;
-our $VERSION = "0.12";
 
 use Exception::Class (
     "Getopt::Lucid::Exception" => {

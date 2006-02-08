@@ -1,18 +1,16 @@
 package Getopt::Lucid;
-use 5.006;
-use strict;
-use warnings;
-our $VERSION = "0.12";
 
-# Required modules
+$VERSION = "0.14";
+@EXPORT_OK = qw(Switch Counter Param List Keypair);
+%EXPORT_TAGS = ( all => [ @EXPORT_OK ] );
+@ISA = qw( Exporter );
+
+use 5.005;
+use strict;
+use Carp;
+use Exporter ();
 use Getopt::Lucid::Exception;
 use Storable qw(dclone);
-use Carp;
-
-use base 'Exporter';
-
-our @EXPORT_OK = qw(Switch Counter Param List Keypair);
-our %EXPORT_TAGS = ( all => [ @EXPORT_OK ] );
 
 # Definitions
 my $VALID_STARTCHAR = "a-zA-Z0-9";
@@ -27,7 +25,9 @@ my $NEGATIVE        = qr/(?:--)?no-/;
 my @valid_keys = qw( name type required default nocase valid needs canon );
 my @valid_types = qw( switch counter parameter list keypair);
 
-our $STRICT = 0;
+use vars qw( $STRICT );
+$STRICT = 0;
+
 
 #--------------------------------------------------------------------------#
 # main pod documentation 
@@ -136,7 +136,7 @@ subsequent alias) separated by a vertical bar character.  E.g.:
 
   "lib|l|I" means name "lib", alias "l" and alias "I"
  
-Names and aliases must begin with an alphanumeric charactes, but subsequently
+Names and aliases must begin with an alphanumeric character, but subsequently
 may also include both underscore and dash.  (E.g. both "input-file" and
 "input_file" are valid.)  While names and aliases are interchangeable
 when provided on the command line, the "name" portion is used with the accessors
@@ -328,6 +328,7 @@ Modifiers may be chained to allow multiple modifiers.  E.g.:
 =cut
 
 package Getopt::Lucid::Spec;
+$Getopt::Lucid::Spec::VERSION = "0.14";
 
 sub required { my $self = shift; $self->{required} = 1; return $self };
 
@@ -1341,8 +1342,7 @@ sub _validate_value {
 
 sub AUTOLOAD {
     my $self = shift;
-    our $AUTOLOAD;
-    my $name = $AUTOLOAD;
+    my $name = $Getopt::Lucid::AUTOLOAD;
     $name =~ s/.*:://;   # strip fully-qualified portion
     return if $name eq "DESTROY";
     my ($action, $maybe_opt) = $name =~ /^(get|set)_(.+)/ ;
