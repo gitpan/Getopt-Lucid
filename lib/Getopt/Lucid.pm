@@ -1,6 +1,6 @@
 package Getopt::Lucid;
 
-$VERSION = "0.14";
+$VERSION = "0.16";
 @EXPORT_OK = qw(Switch Counter Param List Keypair);
 %EXPORT_TAGS = ( all => [ @EXPORT_OK ] );
 @ISA = qw( Exporter );
@@ -63,12 +63,12 @@ Getopt::Lucid - Clear, readable syntax for command line processing
   # advanced option specifications
 
   @adv_spec = (
-    Param("input")->required,       # required
-    Param("mode")->default("tcp"),  # defaults
-    Param("host")->needs("port"),   # dependencies
-    Param("port", qr/\d+/ ),        # regex validation
-    Param("config", sub { -r } ),   # custom validation
-    Param("help")->anycase,         # case insensitivity
+    Param("input")->required,          # required
+    Param("mode")->default("tcp"),     # defaults
+    Param("host")->needs("port"),      # dependencies
+    Param("port", qr/\d+/ )->required, # regex validation
+    Param("config", sub { -r } ),      # custom validation
+    Param("help")->anycase,            # case insensitivity
   );
   
   # example with a config file
@@ -328,7 +328,7 @@ Modifiers may be chained to allow multiple modifiers.  E.g.:
 =cut
 
 package Getopt::Lucid::Spec;
-$Getopt::Lucid::Spec::VERSION = "0.14";
+$Getopt::Lucid::Spec::VERSION = "0.16";
 
 sub required { my $self = shift; $self->{required} = 1; return $self };
 
@@ -363,19 +363,25 @@ package Getopt::Lucid;
 
 =head2 Validation
 
-For Param, List, and Keypair option types, the constructor can be passed an
+For Param, List, and Keypair option types, the constructor may be passed an
 optional validation specification.  Values provided on the command line will be
-validated according to the specification or an exception will be thrown.  A
-validation specification can be either a regular expression, or a reference to
-a subroutine.  Keypairs take up to two validation specifiers.  The first is
-applied to keys and the second is applied to values; either can be left
-undef to ignore validation.  (More complex validation of specific values
-for specific keys must be done manually.)
+validated according to the specification or an exception will be thrown.  
+
+A validation specification can be either a regular expression, or a reference
+to a subroutine.  Keypairs take up to two validation specifiers.  The first is
+applied to keys and the second is applied to values; either can be left undef
+to ignore validation.  (More complex validation of specific values for specific
+keys must be done manually.)
+
+Param options with validation must either be 'required' or have a
+default value that passes the validation test.  This ensures that the option
+will contain valid data once the command line has been processed.  List and
+Keypair options do not have the same restriction as they are empty by default.
 
   @spec = (
-    Param("copies", "\d+"),
-    Param("scaling", qr/\d+/),
-    Param("input", sub { -r } ),
+    Param("copies", "\d+")->required,
+    Param("scaling", qr/\d+/)->default(100),
+    List("input", sub { -r } ),
     Keypair("define, "os|arch", "\w+"),
   );
 
@@ -1204,6 +1210,7 @@ sub _set_defaults {
             /keypair/   ?   (defined $d ? dclone($d): {})  : 
                             undef;
         };
+        next if $spec->{required};
         throw_spec("Default '$spec->{canon}' = '$default{$strip}' fails to validate")
             unless _validate_value($self, $default{$strip}, $spec->{valid});
     }
@@ -1391,6 +1398,10 @@ __END__
 
 =item * 
 
+L<Config::Tiny>
+
+=item * 
+
 L<Config::Simple>
 
 =item *
@@ -1407,36 +1418,55 @@ L<Regexp::Common>
 
 =back
 
-=head1 INSTALLATION
-
-The following commands will build, test, and install this module:
-
- perl Build.PL
- perl Build
- perl Build test
- perl Build install
-
 =head1 BUGS
 
-Please report bugs using the CPAN Request Tracker at 
-http://rt.cpan.org/NoAuth/Bugs.html?Dist=Getopt-Lucid
+Please report bugs or feature requests using the CPAN Request Tracker.
+Bugs can be sent by email to C<<< bug-Getopt-Lucid@rt.cpan.org >>> or
+submitted using the web interface at
+L<http://rt.cpan.org/Public/Dist/Display.html?Name=Getopt-Lucid>
+
+When submitting a bug or request, please include a test-file or a patch to an
+existing test-file that illustrates the bug or desired feature.
 
 =head1 AUTHOR
 
-David A Golden (DAGOLDEN)
+David A. Golden (DAGOLDEN)
 
 dagolden@cpan.org
 
-http://dagolden.com/
+http:E<sol>E<sol>dagolden.comE<sol>
 
-=head1 COPYRIGHT
+=head1 COPYRIGHT AND LICENSE
 
-Copyright (c) 2005 by David A Golden
+Copyright (c) 2005, 2006 by David A. Golden
 
-This program is free software; you can redistribute
-it and/or modify it under the same terms as Perl itself.
+This program is free software; you can redistribute it andE<sol>or modify it under
+the same terms as Perl itself.
 
-The full text of the license can be found in the
-LICENSE file included with this module.
+The full text of the license can be found in the LICENSE file included with
+this module.
+
+=head1 DISCLAIMER OF WARRANTY
+
+BECAUSE THIS SOFTWARE IS LICENSED FREE OF CHARGE, THERE IS NO WARRANTY
+FOR THE SOFTWARE, TO THE EXTENT PERMITTED BY APPLICABLE LAW. EXCEPT WHEN
+OTHERWISE STATED IN WRITING THE COPYRIGHT HOLDERS ANDE<sol>OR OTHER PARTIES
+PROVIDE THE SOFTWARE "AS IS" WITHOUT WARRANTY OF ANY KIND, EITHER
+EXPRESSED OR IMPLIED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE. THE
+ENTIRE RISK AS TO THE QUALITY AND PERFORMANCE OF THE SOFTWARE IS WITH
+YOU. SHOULD THE SOFTWARE PROVE DEFECTIVE, YOU ASSUME THE COST OF ALL
+NECESSARY SERVICING, REPAIR, OR CORRECTION.
+
+IN NO EVENT UNLESS REQUIRED BY APPLICABLE LAW OR AGREED TO IN WRITING
+WILL ANY COPYRIGHT HOLDER, OR ANY OTHER PARTY WHO MAY MODIFY ANDE<sol>OR
+REDISTRIBUTE THE SOFTWARE AS PERMITTED BY THE ABOVE LICENCE, BE
+LIABLE TO YOU FOR DAMAGES, INCLUDING ANY GENERAL, SPECIAL, INCIDENTAL,
+OR CONSEQUENTIAL DAMAGES ARISING OUT OF THE USE OR INABILITY TO USE
+THE SOFTWARE (INCLUDING BUT NOT LIMITED TO LOSS OF DATA OR DATA BEING
+RENDERED INACCURATE OR LOSSES SUSTAINED BY YOU OR THIRD PARTIES OR A
+FAILURE OF THE SOFTWARE TO OPERATE WITH ANY OTHER SOFTWARE), EVEN IF
+SUCH HOLDER OR OTHER PARTY HAS BEEN ADVISED OF THE POSSIBILITY OF
+SUCH DAMAGES.
 
 =cut
