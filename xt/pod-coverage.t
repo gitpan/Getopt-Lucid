@@ -1,5 +1,4 @@
 use Test::More;
-plan skip_all => "Skipping author tests" if not $ENV{AUTHOR_TESTING};
 
 my $min_tpc = 1.08;
 eval "use Test::Pod::Coverage $min_tpc";
@@ -10,6 +9,16 @@ my $min_pc = 0.17;
 eval "use Pod::Coverage $min_pc";
 plan skip_all => "Pod::Coverage $min_pc required for testing POD coverage"
     if $@;
-plan tests => 1;
 
-pod_coverage_ok( "Getopt::Lucid", {trustme => [qw( Counter Switch List Param Keypair)] });
+my @modules = all_modules('lib');
+
+plan tests => scalar @modules; 
+
+for my $mod ( @modules ) {
+    my $doc = "lib/$mod";
+    $doc =~ s{::}{/}g;
+    $doc = -f "$doc\.pod" ? "$doc\.pod" : "$doc\.pm" ;
+    pod_coverage_ok( $mod, { pod_from => $doc } );
+}
+
+
