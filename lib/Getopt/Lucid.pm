@@ -3,7 +3,7 @@ use 5.006;
 use strict;
 use warnings;
 
-our $VERSION = '0.17';
+our $VERSION = '0.18';
 $VERSION = eval $VERSION;
 our @EXPORT_OK = qw(Switch Counter Param List Keypair);
 our %EXPORT_TAGS = ( all => [ @EXPORT_OK ] );
@@ -55,8 +55,9 @@ sub Keypair {
     return bless $self, "Getopt::Lucid::Spec"; 
 }
 
-package Getopt::Lucid::Spec;
-$Getopt::Lucid::Spec::VERSION = "0.16";
+package # hide from PAUSE
+  Getopt::Lucid::Spec;
+our $VERSION = $Getopt::Lucid::VERSION;
 
 sub required { my $self = shift; $self->{required} = 1; return $self };
 
@@ -112,15 +113,16 @@ sub new {
 #--------------------------------------------------------------------------#
 
 sub append_defaults {
-	my $self = shift;
+    my $self = shift;
     my %append = 
         ref $_[0] eq 'HASH' ? %{+shift} : 
         (@_ % 2 == 0) ? @_ : 
         throw_usage("Argument to append_defaults() must be a hash or hash reference");
     for my $name ( keys %{$self->{spec}} ) {
+        my $spec = $self->{spec}{$name};
         my $strip = $self->{strip}{$name};
         next unless exists $append{$strip};
-        for ( $self->{spec}{$name}{type} ) {
+        for ( $spec->{type} ) {
             /switch|parameter/ && do { 
                 $self->{default}{$strip} = $append{$strip};
                 last;
@@ -148,6 +150,8 @@ sub append_defaults {
                 last;
             };
         }
+        throw_spec("Default '$spec->{canon}' = '$self->{default}{$strip}' fails to validate")
+          unless _validate_value($self, $self->{default}{$strip}, $spec->{valid} );
     }
     _recalculate_options($self);
     return $self->options;
@@ -158,8 +162,8 @@ sub append_defaults {
 #--------------------------------------------------------------------------#
 
 sub defaults {
-	my ($self) = @_;
-	return %{dclone($self->{default})};
+    my ($self) = @_;
+    return %{dclone($self->{default})};
 }
 
 
@@ -168,7 +172,7 @@ sub defaults {
 #--------------------------------------------------------------------------#
 
 sub getopt {
-	my ($self,$spec,$target) = @_;
+    my ($self,$spec,$target) = @_;
     if ( $self eq 'Getopt::Lucid' ) {
         throw_usage("Getopt::Lucid->getopt() requires an option specification array reference")
             unless ref($spec) eq 'ARRAY';
@@ -213,12 +217,13 @@ sub getopt {
 #--------------------------------------------------------------------------#
 
 sub merge_defaults {
-	my $self = shift;
+    my $self = shift;
     my %merge = 
         ref $_[0] eq 'HASH' ? %{+shift} : 
         (@_ % 2 == 0) ? @_ : 
         throw_usage("Argument to merge_defaults() must be a hash or hash reference");
     for my $name ( keys %{$self->{spec}} ) {
+        my $spec = $self->{spec}{$name};
         my $strip = $self->{strip}{$name};
         next unless exists $merge{$strip};
         for ( $self->{spec}{$name}{type} ) {
@@ -242,6 +247,8 @@ sub merge_defaults {
                 last;
             };
         }
+        throw_spec("Default '$spec->{canon}' = '$self->{default}{$strip}' fails to validate")
+          unless _validate_value($self, $self->{default}{$strip}, $spec->{valid} );
     }
     _recalculate_options($self);
     return $self->options;
@@ -252,8 +259,8 @@ sub merge_defaults {
 #--------------------------------------------------------------------------#
 
 sub names {
-	my ($self) = @_;
-	return values %{$self->{strip}};
+    my ($self) = @_;
+    return values %{$self->{strip}};
 }
 
 
@@ -262,8 +269,8 @@ sub names {
 #--------------------------------------------------------------------------#
 
 sub options {
-	my ($self) = @_;
-    return %{dclone($self->{options})};	
+    my ($self) = @_;
+    return %{dclone($self->{options})}; 
 }
 
 #--------------------------------------------------------------------------#
@@ -271,12 +278,13 @@ sub options {
 #--------------------------------------------------------------------------#
 
 sub replace_defaults {
-	my $self = shift;
+    my $self = shift;
     my %replace = 
         ref $_[0] eq 'HASH' ? %{+shift} : 
         (@_ % 2 == 0) ? @_ : 
         throw_usage("Argument to replace_defaults() must be a hash or hash reference");
     for my $name ( keys %{$self->{spec}} ) {
+        my $spec = $self->{spec}{$name};
         my $strip = $self->{strip}{$name};
         for ( $self->{spec}{$name}{type} ) {
             /switch|counter/ && do { 
@@ -307,6 +315,8 @@ sub replace_defaults {
                 last;
             };
         }
+        throw_spec("Default '$spec->{canon}' = '$self->{default}{$strip}' fails to validate")
+          unless _validate_value($self, $self->{default}{$strip}, $spec->{valid} );
     }
     _recalculate_options($self);
     return $self->options;
@@ -317,8 +327,8 @@ sub replace_defaults {
 #--------------------------------------------------------------------------#
 
 sub reset_defaults {
-	my ($self) = @_;
-    _set_defaults($self);	
+    my ($self) = @_;
+    _set_defaults($self);   
     _recalculate_options($self);
     return $self->options;
 }
@@ -328,8 +338,8 @@ sub reset_defaults {
 #--------------------------------------------------------------------------#
 
 sub _check_prereqs {
-	my ($self) = @_;
-	for my $key ( keys %{$self->{seen}} ) {
+    my ($self) = @_;
+    for my $key ( keys %{$self->{seen}} ) {
         next unless $self->{seen}{$key};
         next unless exists $self->{spec}{$key}{needs};
         for (@{$self->{spec}{$key}{needs}}) {
@@ -345,7 +355,7 @@ sub _check_prereqs {
 #--------------------------------------------------------------------------#
 
 sub _check_required {
-	my ($self) = @_;
+    my ($self) = @_;
     for ( keys %{$self->{spec}} ) {
         throw_argv("Required option '$self->{spec}{$_}{canon}' not found")
             if ( $self->{spec}{$_}{required} && ! $self->{seen}{$_} ); 
@@ -357,7 +367,7 @@ sub _check_required {
 #--------------------------------------------------------------------------#
 
 sub _counter {
-	my ($self, $arg, $val, $neg) = @_;
+    my ($self, $arg, $val, $neg) = @_;
     throw_argv("Counter option can't take a value: $self->{spec}{$arg}{canon}=$val")
         if defined $val;
     push @{$self->{parsed}}, [ $arg, 1, $neg ];
@@ -368,7 +378,7 @@ sub _counter {
 #--------------------------------------------------------------------------#
 
 sub _find_arg {
-	my ($self, $arg) = @_;
+    my ($self, $arg) = @_;
 
     $arg =~ s/^-*// unless $STRICT;
     return $self->{alias_hr}{$arg} if exists $self->{alias_hr}{$arg}; 
@@ -385,7 +395,7 @@ sub _find_arg {
 #--------------------------------------------------------------------------#
 
 sub _keypair {
-	my ($self, $arg, $val, $neg) = @_;
+    my ($self, $arg, $val, $neg) = @_;
     my ($key, $data);
     if ($neg) {
         $key = $val;
@@ -407,7 +417,7 @@ sub _keypair {
 #--------------------------------------------------------------------------#
 
 sub _list {
-	my ($self, $arg, $val, $neg) = @_;
+    my ($self, $arg, $val, $neg) = @_;
     my $value;
     if ($neg) {
         $value = $val;
@@ -428,7 +438,7 @@ sub _list {
 #--------------------------------------------------------------------------#
 
 sub _parameter {
-	my ($self, $arg, $val, $neg) = @_;
+    my ($self, $arg, $val, $neg) = @_;
     my $value;
     if ($neg) {
         throw_argv("Negated parameter option can't take a value: $self->{spec}{$arg}{canon}=$val")
@@ -450,7 +460,7 @@ sub _parameter {
 #--------------------------------------------------------------------------#
 
 sub _parse_spec {
-	my ($self,$spec) = @_;
+    my ($self,$spec) = @_;
     for my $opt ( @$spec ) {
         my $name = $opt->{name};
         my @names = split( /\|/, $name );
@@ -472,12 +482,12 @@ sub _parse_spec {
 #--------------------------------------------------------------------------#
 
 sub _recalculate_options {
-	my ($self) = @_;
+    my ($self) = @_;
     my %result;
-    for ( keys %{$self->{default}} ) {
-        my $x = $self->{default}{$_};
-        $result{$_} = ref($x) eq 'ARRAY' ? [ @$x ] :
-                      ref($x) eq 'HASH'  ? { %$x } : $x;
+    for my $k ( keys %{$self->{default}} ) {
+        my $d = $self->{default}{$k};
+        $result{$k} = ref($d) eq 'ARRAY' ? [ @$d ] :
+                      ref($d) eq 'HASH'  ? { %$d } : $d;
     }
     for my $opt ( @{$self->{parsed}} ) {
         my ($name, $value, $neg) = @$opt;
@@ -524,7 +534,7 @@ sub _recalculate_options {
 sub _regex_or_code {
     my ($value,$valid) = @_;
     return 1 unless defined $valid;
-	if ( ref($valid) eq 'CODE' ) {
+    if ( ref($valid) eq 'CODE' ) {
         local $_ = $value;
         return $valid->($value);
     } else {
@@ -537,17 +547,21 @@ sub _regex_or_code {
 #--------------------------------------------------------------------------#
 
 sub _set_defaults {
-	my ($self) = @_;
+    my ($self) = @_;
     my %default;
-    for ( keys %{$self->{spec}} ) {
-        my $spec = $self->{spec}{$_};
+    for my $k ( keys %{$self->{spec}} ) {
+        my $spec = $self->{spec}{$k};
         my $d = exists ($spec->{default}) ? $spec->{default} : undef;
-        my $type = $self->{spec}{$_}{type};
-        my $strip = $self->{strip}{$_};
+        my $type = $self->{spec}{$k}{type};
+        my $strip = $self->{strip}{$k};
         throw_spec("Default for list '$spec->{canon}' must be array reference")
             if ( $type eq "list" && defined $d && ref($d) ne "ARRAY" ); 
         throw_spec("Default for keypair '$spec->{canon}' must be hash reference")
             if ( $type eq "keypair" && defined $d && ref($d) ne "HASH" ); 
+        if (defined $d) {
+          throw_spec("Default '$spec->{canon}' = '$d' fails to validate")
+            unless _validate_value($self, $d, $spec->{valid});
+        }
         $default{$strip} = do {
             local $_ = $type;
             /switch/    ?   (defined $d ? $d: 0)   :
@@ -557,9 +571,6 @@ sub _set_defaults {
             /keypair/   ?   (defined $d ? dclone($d): {})  : 
                             undef;
         };
-        next if $spec->{required};
-        throw_spec("Default '$spec->{canon}' = '$default{$strip}' fails to validate")
-            unless _validate_value($self, $default{$strip}, $spec->{valid});
     }
     $self->{default} = \%default;
 }
@@ -569,7 +580,7 @@ sub _set_defaults {
 #--------------------------------------------------------------------------#
 
 sub _split_equals {
-	my ($self,$raw) = @_;
+    my ($self,$raw) = @_;
     my ($arg,$val);
     if ( $raw =~ /^($NEGATIVE?$VALID_NAME|$SHORT_BUNDLE)=(.*)/ ) {
         $arg = $1;
@@ -577,7 +588,7 @@ sub _split_equals {
     } else {
         $arg = $raw;
     }
-	return ($arg, $val);
+    return ($arg, $val);
 }
 
 #--------------------------------------------------------------------------#
@@ -585,7 +596,7 @@ sub _split_equals {
 #--------------------------------------------------------------------------#
 
 sub _switch {
-	my ($self, $arg, $val, $neg) = @_;
+    my ($self, $arg, $val, $neg) = @_;
     throw_argv("Switch can't take a value: $self->{spec}{$arg}{canon}=$val")
         if defined $val;
     if (! $neg ) {
@@ -600,7 +611,7 @@ sub _switch {
 #--------------------------------------------------------------------------#
 
 sub _unbundle {
-	my ($self,$arg, $val) = @_;
+    my ($self,$arg, $val) = @_;
     if ( $arg =~ /^$SHORT_BUNDLE$/ ) { 
         my @flags = split(//,substr($arg,1));
         unshift @{$self->{target}}, ("-" . pop(@flags) . "=" . $val) 
@@ -619,7 +630,7 @@ sub _unbundle {
 
 sub _validate_prereqs {
     my ($self) = @_;
-	for my $key ( keys %{$self->{spec}} ) {
+    for my $key ( keys %{$self->{spec}} ) {
         next unless exists $self->{spec}{$key}{needs};
         my $needs = $self->{spec}{$key}{needs};
         my @prereq = ref($needs) eq 'ARRAY' ? @$needs : ( $needs );
@@ -670,7 +681,7 @@ sub _validate_spec {
 #--------------------------------------------------------------------------#
 
 sub _validate_value {
-	my ($self, $value, $valid) = @_;
+    my ($self, $value, $valid) = @_;
     return 1 unless defined $valid;
     if ( ref($value) eq 'HASH' ) {
         my $valid_key = $valid->[0];
@@ -778,7 +789,7 @@ This documentation describes version %%VERSION%%.
     Param("input")->required,          # required
     Param("mode")->default("tcp"),     # defaults
     Param("host")->needs("port"),      # dependencies
-    Param("port", qr/\d+/ )->required, # regex validation
+    Param("port", qr/\d+/ ),           # regex validation
     Param("config", sub { -r } ),      # custom validation
     Param("help")->anycase,            # case insensitivity
   );
@@ -805,7 +816,7 @@ dashes)
 * Specification of defaults, required options and option dependencies
 * Validation of options with regexes or subroutines
 * Negation of options on the command line
-* Support for parsing any array, not just the default @ARGV
+* Support for parsing any array, not just the default {@ARGV}
 * Incorporation of external defaults (e.g. from a config file) with
 user control of precedence
 
@@ -979,17 +990,21 @@ applied to keys and the second is applied to values; either can be left undef
 to ignore validation.  (More complex validation of specific values for specific
 keys must be done manually.)
 
-Param options with validation must either be 'required' or have a
-default value that passes the validation test.  This ensures that the option
-will contain valid data once the command line has been processed.  List and
-Keypair options do not have the same restriction as they are empty by default.
+Validation is also applied to default values provided via the {default()}
+modifier or later modified with {append_defaults}, {merge_defaults}, or
+{replace_defaults}.  This ensures internal consistency.
 
-  @spec = (
-    Param("copies", "\d+")->required,
-    Param("scaling", qr/\d+/)->default(100),
-    List("input", sub { -r } ),
-    Keypair("define, "os|arch", "\w+"),
-  );
+If no default is explictly provided, validation is only applied if the option
+appears on the command line. (In other words, the built-in defaults are always
+considered valid if the option does not appear.)  If this is not desired, the
+{required()} modifier should be used to force users to provide an explicit
+value.
+
+  # Must be provided and is thus always validated
+  Param("width",  qr/\d+/)->required 
+
+  # Can be left blank, but is validated if provided
+  Param("height", qr/\d+/)
 
 For validation subroutines, the value found on the command line is passed as
 the first element of {@_}, and {$_} is also set equal to the first element.
@@ -1002,9 +1017,9 @@ for a ready library of validation options.
 == Parsing the Command Line
 
 Technically, Getopt::Lucid scans an array for command line options, not a
-command-line string.  By default, this array is @ARGV (though other arrays can
-be used -- see {new()}), which is typically provided by the operating system
-according to system-specific rules.  
+command-line string.  By default, this array is {@ARGV} (though other arrays
+can be used -- see {new()}), which is typically provided by the operating
+system according to system-specific rules.  
 
 When Getopt::Lucid processes the array, it scans the array in order, removing
 any specified command line options and any associated arguments, and leaving
@@ -1114,10 +1129,12 @@ processed without losing the options given on the command line.
 Getopt::Lucid provides several functions to assist in manipulating default
 values:
 
-* {merge_defaults()} -- new defaults overwrite any matching, existing defaults
+* {merge_defaults()} -- new defaults overwrite any matching, existing defaults.
+KeyPairs hashes and List arrays are replaced entirely with new defaults
 * {append_defaults()} -- new defaults overwrite any matching, existing defaults,
 except for Counter and List options, which have the new defaults added and
-appended, respectively
+appended, respectively, and KeyPair options, which are flattened into any
+existing default hash
 * {replace_defaults()} -- new defaults replace existing defaults; any options
 not provided in the new defaults are reset to zero/empty, ignoring any 
 default given in the option specification
@@ -1231,8 +1248,8 @@ called as an object method, it takes no arguments and returns itself.
 
 == merge_defaults()
 
-%options = merge_defaults( %config_hash );
-%options = merge_defaults( \%config_hash );
+ %options = merge_defaults( %config_hash );
+ %options = merge_defaults( \%config_hash );
 
 Takes a hash or hash reference of new default values, modifies the stored
 defaults, recalculates the result of processing the command line with the
@@ -1243,14 +1260,14 @@ specification will be ignored.
 
 == names()
 
-@names = $opt->names();
+ @names = $opt->names();
 
 Returns the list of names in the options specification.  Each name represents a
 key in the hash of options provided by {options}.
 
 == options()
 
-%options = $opt->options();
+ %options = $opt->options();
 
 Returns a deep copy of the options hash.  Before {getopt} is called, its 
 behavior is undefined.  After {getopt} is called, this will return the
@@ -1258,8 +1275,8 @@ result of modifying the defaults with the results of command line processing.
 
 == replace_defaults()
 
-%options = replace_defaults( %config_hash );
-%options = replace_defaults( \%config_hash );
+ %options = replace_defaults( %config_hash );
+ %options = replace_defaults( \%config_hash );
 
 Takes a hash or hash reference of new default values, replaces the stored
 defaults, recalculates the result of processing the command line with the
@@ -1270,7 +1287,7 @@ option specification will be ignored.
 
 == reset_defaults()
 
-%options = reset_defaults();
+ %options = reset_defaults();
 
 Resets the stored defaults to the original values from the options
 specification, recalculates the result of processing the command line with the
@@ -1300,7 +1317,7 @@ David A. Golden (DAGOLDEN)
 
 = COPYRIGHT AND LICENSE
 
-Copyright (c) 2005 - 2008 by David A. Golden
+Copyright (c) 2005 - 2009 by David A. Golden
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
