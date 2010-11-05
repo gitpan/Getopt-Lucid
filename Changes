@@ -1,5 +1,11 @@
 Revision history for Perl module Getopt::Lucid
 
+0.19      2010-11-05 17:07:26 EST5EDT
+
+    - Added valid() modifier and deprecated old way of validating options
+    - Added getopts() as an alias for getopt()
+    - Allows setting param default to undef [Robert Bohne]
+
 0.18 Thu Mar 12 00:11:11 EDT 2009
     - Options with validation specs will not fail just because the option
       is not seen on the command line.  Validation is now only done on default

@@ -2,47 +2,47 @@ NAME
     Getopt::Lucid - Clear, readable syntax for command line processing
 
 VERSION
-    This documentation describes version 0.18.
+    version 0.19
 
 SYNOPSIS
        use Getopt::Lucid qw( :all );
-     
-   # basic option specifications with aliases
-     
-   @specs = (
-         Switch("version|V"),    
-         Counter("verbose|v"), 
-         Param("config|C"), 
+ 
+       # basic option specifications with aliases
+ 
+       @specs = (
+         Switch("version|V"),
+         Counter("verbose|v"),
+         Param("config|C"),
          List("lib|l|I"),
          Keypair("define"),
          Switch("help|h")
        );
-     
-   $opt = Getopt::Lucid->getopt( \@specs );
-     
-   $verbosity = $opt->get_verbose;
+ 
+       $opt = Getopt::Lucid->getopt( \@specs );
+ 
+       $verbosity = $opt->get_verbose;
        @libs = $opt->get_lib;
        %defs = $opt->get_define;
-     
-   %all_options = $opt->options;
-     
-   # advanced option specifications
-     
-   @adv_spec = (
+ 
+       %all_options = $opt->options;
+ 
+       # advanced option specifications
+ 
+       @adv_spec = (
          Param("input")->required,          # required
          Param("mode")->default("tcp"),     # defaults
          Param("host")->needs("port"),      # dependencies
-         Param("port", qr/\d+/ ),           # regex validation
-         Param("config", sub { -r } ),      # custom validation
+         Param("port")->valid(qr/\d+/),     # regex validation
+         Param("config")->valid(sub { -r }),# custom validation
          Param("help")->anycase,            # case insensitivity
        );
-     
-   # example with a config file
-     
-   use Config::Std;
+ 
+       # example with a config file
+ 
+       use Config::Std;
        if ( -r $opt->get_config ) {
          read_config( $opt->get_config() => my %config_hash );
-         $opt->merge_defaults( $config_hash{''} ); 
+         $opt->merge_defaults( $config_hash{''} );
        }
 
 DESCRIPTION
@@ -115,19 +115,18 @@ USAGE
 
   Option Specification Constructors
     Options specifications are provided to Getopt::Lucid in an array.
-    Entries in the array must be created with one of five special
+    Entries in the array must be created with one of several special
     constructor functions that return a specification object. These
     constructor functions may be imported either individually or as a group
     using the import tag ":all" (e.g. "use Getopt::Lucid qw(:all);").
 
     The form of the constructor is:
 
-      Param( NAME_ARGUMENT, VALIDATION_ARGUMENT(S) );
+      TYPE( NAME_ARGUMENT );
 
-    The constructor name indicates the type of option. The name argument is
-    a string with the names and aliases separated by vertical bar
-    characters. Validation arguments may or may not be relevant, depending
-    on the type of option. (See "Validation" below.)
+    The constructor function name indicates the type of option. The name
+    argument is a string with the names and aliases separated by vertical
+    bar characters.
 
     The five option specification constructors are:
 
@@ -176,6 +175,18 @@ USAGE
          Param("output)->default("/dev/null"),
        );
 
+   valid()
+    Sets the validation parameter(s) for an option.
+
+       @spec = (
+         Param("port")->valid(qr/\d+/),          # regex validation
+         Param("config")->valid(sub { -r }),     # custom validation
+         Keypair("define")
+           ->valid(\&_valid_key, \&valid_value), # keypairs take two
+       );
+
+    See the "Validation" section, below, for more.
+
    default()
     Changes the default for the option to the argument(s) of "default()".
     List and hashes can take either a list or a reference to an array or
@@ -218,10 +229,9 @@ USAGE
        );
 
   Validation
-    For Param, List, and Keypair option types, the constructor may be passed
-    an optional validation specification. Values provided on the command
-    line will be validated according to the specification or an exception
-    will be thrown.
+    The Param, List, and Keypair option types may be provided an optional
+    validation specification. Values provided on the command line will be
+    validated according to the specification or an exception will be thrown.
 
     A validation specification can be either a regular expression, or a
     reference to a subroutine. Keypairs take up to two validation
@@ -241,10 +251,10 @@ USAGE
     users to provide an explicit value.
 
        # Must be provided and is thus always validated
-       Param("width",  qr/\d+/)->required 
-     
-   # Can be left blank, but is validated if provided
-       Param("height", qr/\d+/)
+       Param("width")->valid(qr/\d+/)->required
+ 
+       # Can be left blank, but is validated if provided
+       Param("height")->valid(qr/\d+/)
 
     For validation subroutines, the value found on the command line is
     passed as the first element of @_, and $_ is also set equal to the first
@@ -253,6 +263,13 @@ USAGE
 
     For validation with regular expressions, consider using Regexp::Common
     for a ready library of validation options.
+
+    Older versions of Getopt::Lucid used validation arguments provided in
+    the Spec constructor. This is still supported, but is deprecated and
+    discouraged. It may be removed in a future version of Getopt::Lucid.
+
+       # deprecated
+       Param("height", qr/\d+/)
 
   Parsing the Command Line
     Technically, Getopt::Lucid scans an array for command line options, not
@@ -296,8 +313,8 @@ USAGE
 
        $ alias wibble = wibble.pl --verbose
        $ wibble --no-verbose
-     
-   # @ARGV would contain ( "--verbose", "--no-verbose" )
+ 
+       # @ARGV would contain ( "--verbose", "--no-verbose" )
 
     This also may have applications in post-processing configuration files
     (see "Managing Defaults and Config Files").
@@ -310,9 +327,11 @@ USAGE
 
        @spec = (
          Switch("--test|-t"),
+         List("--lib|-L"),
+         Keypair("--define|-D"),
        );
-     
-   $opt = Getopt::Long->getopt( \@spec );
+ 
+       $opt = Getopt::Long->getopt( \@spec );
        print $opt->get_test ? "True" : "False";
        $opt->set_test(1);
 
@@ -322,14 +341,19 @@ USAGE
        @spec = (
          Param("--input-file|-i")->required(),
        );
-     
-   $opt = Getopt::Long->getopt( \@spec );
+ 
+       $opt = Getopt::Long->getopt( \@spec );
        print $opt->get_input_file;
 
     This can create an ambiguous case if a similar option exists with
     underscores in place of dashes. (E.g. "input_file" and "input-file".)
     Users can safely avoid these problems by choosing to use either dashes
     or underscores exclusively and not mixing the two styles.
+
+    List and Keypair options are returned as flattened lists:
+
+       my @lib = $opt->get_lib;
+       my %define = $opt->get_define;
 
     Using the "set_NAME" mutator is not recommended and should be used with
     caution. No validation is performed and changes will be lost if the
@@ -493,6 +517,8 @@ METHODS
     object. When called as an object method, it takes no arguments and
     returns itself.
 
+    For convenience, C<getopts()> is a alias for C<getopt()>.
+
   merge_defaults()
       %options = merge_defaults( %config_hash );
       %options = merge_defaults( \%config_hash );
@@ -558,22 +584,12 @@ BUGS
     to an existing test-file that illustrates the bug or desired feature.
 
 AUTHOR
-    David A. Golden (DAGOLDEN)
+    David Golden <dagolden@cpan.org>
 
 COPYRIGHT AND LICENSE
-    Copyright (c) 2005 - 2009 by David A. Golden
+    This software is Copyright (c) 2010 by David Golden.
 
-    Licensed under the Apache License, Version 2.0 (the "License"); you may
-    not use this file except in compliance with the License. You may obtain
-    a copy of the License at <http://www.apache.org/licenses/LICENSE-2.0>
+    This is free software, licensed under:
 
-    Files produced as output though the use of this software shall not be
-    considered Derivative Works, but shall be considered the original work
-    of the Licensor.
-
-    Unless required by applicable law or agreed to in writing, software
-    distributed under the License is distributed on an "AS IS" BASIS,
-    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-    See the License for the specific language governing permissions and
-    limitations under the License.
+      The Apache License, Version 2.0, January 2004
 

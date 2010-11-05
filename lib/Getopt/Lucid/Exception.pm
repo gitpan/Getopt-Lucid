@@ -1,12 +1,22 @@
-package Getopt::Lucid::Exception;
+#
+# This file is part of Getopt-Lucid
+#
+# This software is Copyright (c) 2010 by David Golden.
+#
+# This is free software, licensed under:
+#
+#   The Apache License, Version 2.0, January 2004
+#
 use 5.006;
 use strict;
 use warnings;
+package Getopt::Lucid::Exception;
+BEGIN {
+  $Getopt::Lucid::Exception::VERSION = '0.19';
+}
+# ABSTRACT: Exception classes for Getopt::Lucid
 
-our $VERSION = '0.18';
-$VERSION = eval $VERSION;
-
-use Exception::Class (
+use Exception::Class 1.23 (
     "Getopt::Lucid::Exception" => {
         description => "Unidentified exception",
     },
@@ -32,25 +42,36 @@ sub import {
     my $caller = caller(0);
     {
         no strict 'refs';
-        *{$caller."::$_"} = *{__PACKAGE__."::$_"} 
+        *{$caller."::$_"} = *{__PACKAGE__."::$_"}
             for qw( throw_spec throw_argv throw_usage);
     }
 }
 
-1; #this line is important and will help the module return a true value
-__END__
+1;
 
-# AUTHOR
-# David A Golden (DAGOLDEN)
-# dagolden@cpan.org
-# http://dagolden.com/
-#
-# COPYRIGHT
-#
-# Copyright (c) 2005 by David A Golden
-#
-# This program is free software; you can redistribute
-# it and/or modify it under the same terms as Perl itself.
-#
-# The full text of the license can be found in the
-# LICENSE file included with this module.
+
+__END__
+=pod
+
+=head1 NAME
+
+Getopt::Lucid::Exception - Exception classes for Getopt::Lucid
+
+=head1 VERSION
+
+version 0.19
+
+=head1 AUTHOR
+
+David Golden <dagolden@cpan.org>
+
+=head1 COPYRIGHT AND LICENSE
+
+This software is Copyright (c) 2010 by David Golden.
+
+This is free software, licensed under:
+
+  The Apache License, Version 2.0, January 2004
+
+=cut
+
