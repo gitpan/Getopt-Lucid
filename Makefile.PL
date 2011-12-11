@@ -2,39 +2,41 @@
 use strict;
 use warnings;
 
-BEGIN { require 5.006; }
+use 5.006;
 
-use ExtUtils::MakeMaker 6.31;
+use ExtUtils::MakeMaker 6.30;
 
 
 
 my %WriteMakefileArgs = (
-  'ABSTRACT' => 'Clear, readable syntax for command line processing',
-  'AUTHOR' => 'David Golden <dagolden@cpan.org>',
-  'BUILD_REQUIRES' => {
-    'Data::Dumper' => '0',
-    'Exception::Class::TryCatch' => '1.10',
-    'File::Find' => '0',
-    'File::Temp' => '0',
-    'Test::More' => '0.62'
+  "ABSTRACT" => "Clear, readable syntax for command line processing",
+  "AUTHOR" => "David Golden <dagolden\@cpan.org>",
+  "BUILD_REQUIRES" => {
+    "Data::Dumper" => 0,
+    "Exception::Class::TryCatch" => "1.10",
+    "File::Find" => 0,
+    "File::Temp" => 0,
+    "Test::More" => "0.62",
+    "vars" => 0
   },
-  'CONFIGURE_REQUIRES' => {
-    'ExtUtils::MakeMaker' => '6.31'
+  "CONFIGURE_REQUIRES" => {
+    "ExtUtils::MakeMaker" => "6.30"
   },
-  'DISTNAME' => 'Getopt-Lucid',
-  'EXE_FILES' => [],
-  'LICENSE' => 'apache',
-  'NAME' => 'Getopt::Lucid',
-  'PREREQ_PM' => {
-    'Carp' => '0',
-    'Exception::Class' => '1.23',
-    'Exporter' => '0',
-    'Storable' => '2.16',
-    'vars' => '0'
+  "DISTNAME" => "Getopt-Lucid",
+  "EXE_FILES" => [],
+  "LICENSE" => "apache",
+  "NAME" => "Getopt::Lucid",
+  "PREREQ_PM" => {
+    "Carp" => 0,
+    "Exception::Class" => "1.23",
+    "Exporter" => 0,
+    "Storable" => "2.16",
+    "strict" => 0,
+    "warnings" => 0
   },
-  'VERSION' => '0.19',
-  'test' => {
-    'TESTS' => 't/*.t'
+  "VERSION" => "1.00",
+  "test" => {
+    "TESTS" => "t/*.t"
   }
 );
 

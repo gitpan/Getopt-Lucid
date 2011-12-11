@@ -2,7 +2,7 @@ NAME
     Getopt::Lucid - Clear, readable syntax for command line processing
 
 VERSION
-    version 0.19
+    version 1.00
 
 SYNOPSIS
        use Getopt::Lucid qw( :all );
@@ -18,7 +18,7 @@ SYNOPSIS
          Switch("help|h")
        );
  
-       $opt = Getopt::Lucid->getopt( \@specs );
+       $opt = Getopt::Lucid->getopt( \@specs )->validate;
  
        $verbosity = $opt->get_verbose;
        @libs = $opt->get_lib;
@@ -29,16 +29,19 @@ SYNOPSIS
        # advanced option specifications
  
        @adv_spec = (
-         Param("input")->required,          # required
+         Param("input"),
          Param("mode")->default("tcp"),     # defaults
          Param("host")->needs("port"),      # dependencies
          Param("port")->valid(qr/\d+/),     # regex validation
          Param("config")->valid(sub { -r }),# custom validation
          Param("help")->anycase,            # case insensitivity
        );
+       $opt = Getopt::Lucid->getopt( \@adv_spec );
+       $opt->validate( 'requires' => ['input'] );
  
        # example with a config file
  
+       $opt = Getopt::Lucid->getopt( \@adv_spec );
        use Config::Std;
        if ( -r $opt->get_config ) {
          read_config( $opt->get_config() => my %config_hash );
@@ -106,8 +109,8 @@ USAGE
     In practice, this means that the specification need not use dashes, but
     if used on the command line, they will be treated appropriately.
 
-    Alternatively, Getopt::Lucid can operate in "strict" mode by setting
-    $Getopt::Lucid::STRICT to a true value. In strict mode, option names and
+    Alternatively, Getopt::Lucid can operate in "strict" mode by setting the
+    C<strict> parameter to a true value. In strict mode, option names and
     aliases may still be specified in any of the three styles, but they will
     only be parsed from the command line if they are used in exactly the
     same style. E.g., given the name and alias "--help|-h", only "--help"
@@ -229,6 +232,11 @@ USAGE
        );
 
   Validation
+    Validation happens in two stages. First, individual parameters may have
+    validation criteria added to them. Second, the parsed options object may
+    be validated by checking that all requirements or prerequires are met.
+
+   Parameter validation
     The Param, List, and Keypair option types may be provided an optional
     validation specification. Values provided on the command line will be
     validated according to the specification or an exception will be thrown.
@@ -247,14 +255,13 @@ USAGE
     If no default is explictly provided, validation is only applied if the
     option appears on the command line. (In other words, the built-in
     defaults are always considered valid if the option does not appear.) If
-    this is not desired, the "required()" modifier should be used to force
-    users to provide an explicit value.
+    this is not desired, the "required" option to the "validate" method
+    should be used to force users to provide an explicit value.
 
        # Must be provided and is thus always validated
-       Param("width")->valid(qr/\d+/)->required
- 
-       # Can be left blank, but is validated if provided
-       Param("height")->valid(qr/\d+/)
+       @spec = ( Param("width")->valid(qr/\d+/) );
+       $opt = Getopt::Lucid->getopt(\@spec);
+       $opt->validate( {requires => ['width']} );
 
     For validation subroutines, the value found on the command line is
     passed as the first element of @_, and $_ is also set equal to the first
@@ -270,6 +277,26 @@ USAGE
 
        # deprecated
        Param("height", qr/\d+/)
+
+   Options object validation
+    The "validate" method should be called on the result of "getopt". This
+    will check that all parameter prerequisites defined by "needs" have been
+    met. It also takes a hashref of arguments. The optional "requires"
+    argument gives an arrayref of parameters that must exist.
+
+    The reason that object validation is done separate from "getopt" is to
+    allow for better control over different options that might be required
+    or to allow some dependencies (i.e. from "needs") to be met via a
+    configuration file.
+
+       @spec = (
+         Param("action")->needs(qw/user password/),
+         Param("user"),
+         Param("password"),
+       );
+       $opt = Getopt::Lucid->getopt(\@spec);
+       $opt->merge_defaults( read_config() ); # provides 'user' & 'password'
+       $opt->validate({requires => ['action']});
 
   Parsing the Command Line
     Technically, Getopt::Lucid scans an array for command line options, not
@@ -339,7 +366,7 @@ USAGE
     accessor calls. E.g.
 
        @spec = (
-         Param("--input-file|-i")->required(),
+         Param("--input-file|-i")
        );
  
        $opt = Getopt::Long->getopt( \@spec );
@@ -471,15 +498,36 @@ USAGE
 METHODS
   new()
       $opt = Getopt::Lucid->new( \@option_spec );
+      $opt = Getopt::Lucid->new( \@option_spec, \%parameters );
       $opt = Getopt::Lucid->new( \@option_spec, \@option_array );
+      $opt = Getopt::Lucid->new( \@option_spec, \@option_array, \%parameters );
 
     Creates a new Getopt::Lucid object. An array reference to an option spec
     is required as an argument. (See "USAGE" for a description of the object
     spec). By default, objects will be set to read @ARGV for command line
     options. An optional second argument with a reference to an array will
-    use that array for option processing instead. For typical cases, users
-    will likely prefer to call "getopt" instead, which creates a new object
-    and parses the command line with a single function call.
+    use that array for option processing instead. The final argument may be
+    a hashref of parameters. The only valid parameter currently is:
+
+    *   strict -- enables strict mode when true
+
+    For typical cases, users will likely prefer to call "getopt" instead,
+    which creates a new object and parses the command line with a single
+    function call.
+
+  validate()
+       $opt->validate();
+       $opt->validate( \%arguments );
+
+    Takes an optional argument hashref, validates that all requirements and
+    prerequisites are met or throws an error. Valid argument keys are:
+
+    *   "requires" -- an arrayref of options that must exist in the options
+        object.
+
+    This method returns the object for convenient chaining:
+
+       $opt = Getopt::Lucid->getopt(\@spec)->validate;
 
   append_defaults()
       %options = append_defaults( %config_hash );
@@ -564,6 +612,18 @@ METHODS
     options. This undoes the effect of a "merge_defaults" or "add_defaults"
     call.
 
+API CHANGES
+    In 1.00, the following API changes have been made:
+
+    *   "new()" now takes an optional hashref of parameters as the last
+        argument
+
+    *   The global $STRICT variable has been replaced with a per-object
+        parameter "strict"
+
+    *   The "required" modifier has been removed and a new "validate" method
+        has been added to facilitate late/custom checks of required options
+
 SEE ALSO
     *   Config::Tiny
 
@@ -583,11 +643,25 @@ BUGS
     When submitting a bug or request, please include a test-file or a patch
     to an existing test-file that illustrates the bug or desired feature.
 
+SUPPORT
+  Bugs / Feature Requests
+    Please report any bugs or feature requests through the issue tracker at
+    <http://rt.cpan.org/Public/Dist/Display.html?Name=Getopt-Lucid>. You
+    will be notified automatically of any progress on your issue.
+
+  Source Code
+    This is open source software. The code repository is available for
+    public review and contribution under the terms of the license.
+
+    <https://github.com/dagolden/getopt-lucid>
+
+      git clone https://github.com/dagolden/getopt-lucid.git
+
 AUTHOR
     David Golden <dagolden@cpan.org>
 
 COPYRIGHT AND LICENSE
-    This software is Copyright (c) 2010 by David Golden.
+    This software is Copyright (c) 2011 by David Golden.
 
     This is free software, licensed under:
 

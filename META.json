@@ -4,7 +4,7 @@
       "David Golden <dagolden@cpan.org>"
    ],
    "dynamic_config" : 0,
-   "generated_by" : "Dist::Zilla version 4.102341, CPAN::Meta::Converter version 2.102400",
+   "generated_by" : "Dist::Zilla version 4.300003, CPAN::Meta::Converter version 2.112580",
    "license" : [
       "apache_2_0"
    ],
@@ -27,7 +27,7 @@
    "prereqs" : {
       "configure" : {
          "requires" : {
-            "ExtUtils::MakeMaker" : "6.31"
+            "ExtUtils::MakeMaker" : "6.30"
          }
       },
       "runtime" : {
@@ -37,7 +37,8 @@
             "Exporter" : 0,
             "Storable" : "2.16",
             "perl" : "5.006",
-            "vars" : 0
+            "strict" : 0,
+            "warnings" : 0
          }
       },
       "test" : {
@@ -46,33 +47,38 @@
             "Exception::Class::TryCatch" : "1.10",
             "File::Find" : 0,
             "File::Temp" : 0,
-            "Test::More" : "0.62"
+            "Test::More" : "0.62",
+            "vars" : 0
          }
       }
    },
    "provides" : {
       "Getopt::Lucid" : {
          "file" : "lib/Getopt/Lucid.pm",
-         "version" : "0.19"
+         "version" : "1.00"
       },
       "Getopt::Lucid::Exception" : {
          "file" : "lib/Getopt/Lucid/Exception.pm",
-         "version" : "0.19"
+         "version" : "1.00"
       },
       "Getopt::Lucid::Spec" : {
          "file" : "lib/Getopt/Lucid.pm",
-         "version" : "0.19"
+         "version" : "1.00"
       }
    },
    "release_status" : "stable",
    "resources" : {
-      "homepage" : "http://github.com/dagolden/getopt-lucid/tree",
+      "bugtracker" : {
+         "mailto" : "bug-getopt-lucid at rt.cpan.org",
+         "web" : "http://rt.cpan.org/Public/Dist/Display.html?Name=Getopt-Lucid"
+      },
+      "homepage" : "https://github.com/dagolden/getopt-lucid",
       "repository" : {
          "type" : "git",
-         "url" : "git://github.com/dagolden/getopt-lucid.git",
-         "web" : "http://github.com/dagolden/getopt-lucid/tree"
+         "url" : "https://github.com/dagolden/getopt-lucid.git",
+         "web" : "https://github.com/dagolden/getopt-lucid"
       }
    },
-   "version" : "0.19"
+   "version" : "1.00"
 }
 

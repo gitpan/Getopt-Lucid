@@ -1,5 +1,13 @@
 Revision history for Perl module Getopt::Lucid
 
+1.00      2011-12-10 23:32:42 EST5EDT
+
+    - new() takes optional hashref of parameters
+    - Remove global $STRICT and replace with 'strict' object parameter
+    - Remove 'required' modifier for parameters and provide a new
+      'validate' method for late checking of prerequisites
+    - Fix missing $VERSION
+
 0.19      2010-11-05 17:07:26 EST5EDT
 
     - Added valid() modifier and deprecated old way of validating options

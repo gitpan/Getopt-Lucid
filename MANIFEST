@@ -5,11 +5,13 @@ META.json
 META.yml
 Makefile.PL
 README
+README.PATCHING
 Todo
 dist.ini
 examples/cpanget
 lib/Getopt/Lucid.pm
 lib/Getopt/Lucid/Exception.pm
+perlcritic.rc
 t/00-compile.t
 t/00-new.t
 t/01-exceptions.t
@@ -23,7 +25,9 @@ t/08-strict-names.t
 t/09-negation.t
 t/10-default-validation.t
 t/ErrorMessages.pm
+xt/author/critic.t
 xt/release/distmeta.t
 xt/release/pod-coverage.t
 xt/release/pod-syntax.t
 xt/release/portability.t
+xt/release/test-version.t

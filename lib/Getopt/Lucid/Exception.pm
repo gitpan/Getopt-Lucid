@@ -1,20 +1,9 @@
-#
-# This file is part of Getopt-Lucid
-#
-# This software is Copyright (c) 2010 by David Golden.
-#
-# This is free software, licensed under:
-#
-#   The Apache License, Version 2.0, January 2004
-#
 use 5.006;
 use strict;
 use warnings;
 package Getopt::Lucid::Exception;
-BEGIN {
-  $Getopt::Lucid::Exception::VERSION = '0.19';
-}
 # ABSTRACT: Exception classes for Getopt::Lucid
+our $VERSION = '1.00'; # VERSION
 
 use Exception::Class 1.23 (
     "Getopt::Lucid::Exception" => {
@@ -59,7 +48,7 @@ Getopt::Lucid::Exception - Exception classes for Getopt::Lucid
 
 =head1 VERSION
 
-version 0.19
+version 1.00
 
 =head1 AUTHOR
 
@@ -67,7 +56,7 @@ David Golden <dagolden@cpan.org>
 
 =head1 COPYRIGHT AND LICENSE
 
-This software is Copyright (c) 2010 by David Golden.
+This software is Copyright (c) 2011 by David Golden.
 
 This is free software, licensed under:
 

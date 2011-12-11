@@ -1,17 +1,9 @@
-#
-# This file is part of Getopt-Lucid
-#
-# This software is Copyright (c) 2010 by David Golden.
-#
-# This is free software, licensed under:
-#
-#   The Apache License, Version 2.0, January 2004
-#
 use 5.006;
 use strict;
 use warnings;
 package Getopt::Lucid;
 # ABSTRACT: Clear, readable syntax for command line processing
+our $VERSION = '1.00'; # VERSION
 
 our @EXPORT_OK = qw(Switch Counter Param List Keypair);
 our %EXPORT_TAGS = ( all => [ @EXPORT_OK ] );
@@ -32,12 +24,8 @@ my $VALID_NAME      = qr/$VALID_LONG|$VALID_SHORT|$VALID_BARE/;
 my $SHORT_BUNDLE    = qr/-[$VALID_STARTCHAR]{2,}/;
 my $NEGATIVE        = qr/(?:--)?no-/;
 
-my @valid_keys = qw( name type required default nocase valid needs canon );
+my @valid_keys = qw( name type default nocase valid needs canon );
 my @valid_types = qw( switch counter parameter list keypair);
-
-use vars qw( $STRICT );
-$STRICT = 0;
-
 
 sub Switch  {
     return bless { name => shift, type => 'switch' },
@@ -63,9 +51,9 @@ sub Keypair {
     return bless $self, "Getopt::Lucid::Spec";
 }
 
-package # hide from PAUSE
+package
   Getopt::Lucid::Spec;
-our $VERSION = $Getopt::Lucid::VERSION;
+$Getopt::Lucid::Spec::VERSION = $Getopt::Lucid::VERSION;
 
 # alternate way to specify validation
 sub valid {
@@ -75,8 +63,6 @@ sub valid {
     $self->{valid} = $self->{type} eq 'keypair' ? [ @_ ] : shift;
     return $self;
 }
-
-sub required { my $self = shift; $self->{required} = 1; return $self };
 
 sub default {
     my $self = shift;
@@ -111,17 +97,23 @@ package Getopt::Lucid;
 # new()
 #--------------------------------------------------------------------------#
 
+my @params = qw/strict target/;
+
 sub new {
     my ($class, $spec, $target) = @_;
+    my $args = ref($_[-1]) eq 'HASH' ? pop(@_) : {};
+    $args->{target} = ref($target) eq 'ARRAY' ? $target : \@ARGV;
+    my $self = {};
+    $self->{$_} = $args->{$_} for @params;
+    $self->{raw_spec} = $spec;
+    bless ($self, ref($class) ? ref($class) : $class);
     throw_usage("Getopt::Lucid->new() requires an option specification array reference")
-        unless ref($spec) eq 'ARRAY';
-    my $self = bless ({}, ref($class) ? ref($class) : $class);
-    _parse_spec($self, $spec);
+        unless ref($self->{raw_spec}) eq 'ARRAY';
+    _parse_spec($self);
     _set_defaults($self);
     $self->{options} = {};
     $self->{parsed} = [];
     $self->{seen}{$_} = 0 for keys %{$self->{spec}};
-    $self->{target} = $target || \@ARGV;
     return $self;
 }
 
@@ -193,7 +185,7 @@ sub getopt {
     if ( $self eq 'Getopt::Lucid' ) {
         throw_usage("Getopt::Lucid->getopt() requires an option specification array reference")
             unless ref($spec) eq 'ARRAY';
-        $self = new($self,$spec,$target)
+        $self = new(@_)
     }
     my (@passthrough);
     while (@{$self->{target}}) {
@@ -221,14 +213,30 @@ sub getopt {
             push @passthrough, $orig;
         }
     }
-    _check_required($self);
-    _check_prereqs($self);
     _recalculate_options($self);
     @{$self->{target}} = (@passthrough, @{$self->{target}});
     return $self;
 }
 
 BEGIN { *getopts = \&getopt }; # handy alias
+
+#--------------------------------------------------------------------------#
+# validate
+#--------------------------------------------------------------------------#
+
+sub validate {
+  my ($self, $arg) = @_;
+  throw_usage("Getopt::Lucid->validate() takes an optional hashref argument")
+    unless $arg && ref($arg) eq 'HASH';
+
+  for my $p ( @{$arg->{requires}} ) {
+      throw_argv("Required option '$self->{spec}{$p}{canon}' not found")
+          if ( ! $self->{seen}{$p} );
+  }
+  _check_prereqs($self);
+
+  return $self;
+}
 
 #--------------------------------------------------------------------------#
 # merge_defaults()
@@ -369,18 +377,6 @@ sub _check_prereqs {
 }
 
 #--------------------------------------------------------------------------#
-# _check_required()
-#--------------------------------------------------------------------------#
-
-sub _check_required {
-    my ($self) = @_;
-    for ( keys %{$self->{spec}} ) {
-        throw_argv("Required option '$self->{spec}{$_}{canon}' not found")
-            if ( $self->{spec}{$_}{required} && ! $self->{seen}{$_} );
-    }
-}
-
-#--------------------------------------------------------------------------#
 # _counter()
 #--------------------------------------------------------------------------#
 
@@ -398,7 +394,7 @@ sub _counter {
 sub _find_arg {
     my ($self, $arg) = @_;
 
-    $arg =~ s/^-*// unless $STRICT;
+    $arg =~ s/^-*// unless $self->{strict};
     return $self->{alias_hr}{$arg} if exists $self->{alias_hr}{$arg};
 
     for ( keys %{$self->{alias_nocase}} ) {
@@ -478,13 +474,14 @@ sub _parameter {
 #--------------------------------------------------------------------------#
 
 sub _parse_spec {
-    my ($self,$spec) = @_;
+    my ($self) = @_;
+    my $spec = $self->{raw_spec};
     for my $opt ( @$spec ) {
         my $name = $opt->{name};
         my @names = split( /\|/, $name );
         $opt->{canon} = $names[0];
         _validate_spec($self,\@names,$opt);
-        @names = map { s/^-*//; $_ } @names unless $STRICT; ## no critic
+        @names = map { s/^-*//; $_ } @names unless $self->{strict}; ## no critic
         for (@names) {
             $self->{alias_hr}{$_} = $names[0];
             $self->{alias_nocase}{$_} = $names[0]  if $opt->{nocase};
@@ -670,7 +667,7 @@ sub _validate_spec {
     my ($self,$names,$details) = @_;
     for my $name ( @$names ) {
         my $alt_name = $name;
-        $alt_name =~ s/^-*// unless $STRICT;
+        $alt_name =~ s/^-*// unless $self->{strict};
         throw_spec(
             "'$name' is not a valid option name/alias"
         ) unless $name =~ /^$VALID_NAME$/;
@@ -776,7 +773,7 @@ Getopt::Lucid - Clear, readable syntax for command line processing
 
 =head1 VERSION
 
-version 0.19
+version 1.00
 
 =head1 SYNOPSIS
 
@@ -793,7 +790,7 @@ version 0.19
      Switch("help|h")
    );
  
-   $opt = Getopt::Lucid->getopt( \@specs );
+   $opt = Getopt::Lucid->getopt( \@specs )->validate;
  
    $verbosity = $opt->get_verbose;
    @libs = $opt->get_lib;
@@ -804,16 +801,19 @@ version 0.19
    # advanced option specifications
  
    @adv_spec = (
-     Param("input")->required,          # required
+     Param("input"),
      Param("mode")->default("tcp"),     # defaults
      Param("host")->needs("port"),      # dependencies
      Param("port")->valid(qr/\d+/),     # regex validation
      Param("config")->valid(sub { -r }),# custom validation
      Param("help")->anycase,            # case insensitivity
    );
+   $opt = Getopt::Lucid->getopt( \@adv_spec );
+   $opt->validate( 'requires' => ['input'] );
  
    # example with a config file
  
+   $opt = Getopt::Lucid->getopt( \@adv_spec );
    use Config::Std;
    if ( -r $opt->get_config ) {
      read_config( $opt->get_config() => my %config_hash );
@@ -911,7 +911,7 @@ In practice, this means that the specification need not use dashes, but if
 used on the command line, they will be treated appropriately.
 
 Alternatively, Getopt::Lucid can operate in "strict" mode by setting
-C<<< $Getopt::Lucid::STRICT >>> to a true value.  In strict mode, option names
+the CE<lt>strictE<gt> parameter to a true value.  In strict mode, option names
 and aliases may still be specified in any of the three styles, but they
 will only be parsed from the command line if they are used in exactly
 the same style.  E.g., given the name and alias "--helpE<verbar>-h", only "--help"
@@ -1044,6 +1044,12 @@ argument is needed.
 
 =head2 Validation
 
+Validation happens in two stages.  First, individual parameters may have
+validation criteria added to them.  Second, the parsed options object may be
+validated by checking that all requirements or prerequires are met.
+
+=head3 Parameter validation
+
 The Param, List, and Keypair option types may be provided an optional
 validation specification.  Values provided on the command line will be
 validated according to the specification or an exception will be thrown.
@@ -1061,14 +1067,13 @@ C<<< replace_defaults >>>.  This ensures internal consistency.
 If no default is explictly provided, validation is only applied if the option
 appears on the command line. (In other words, the built-in defaults are always
 considered valid if the option does not appear.)  If this is not desired, the
-C<<< required() >>> modifier should be used to force users to provide an explicit
-value.
+C<<< required >>> option to the C<<< validate >>> method should be used to force users to
+provide an explicit value.
 
    # Must be provided and is thus always validated
-   Param("width")->valid(qr/\d+/)->required
- 
-   # Can be left blank, but is validated if provided
-   Param("height")->valid(qr/\d+/)
+   @spec = ( Param("width")->valid(qr/\d+/) );
+   $opt = Getopt::Lucid->getopt(\@spec);
+   $opt->validate( {requires => ['width']} );
 
 For validation subroutines, the value found on the command line is passed as
 the first element of C<<< @_ >>>, and C<<< $_ >>> is also set equal to the first element.
@@ -1084,6 +1089,26 @@ may be removed in a future version of Getopt::Lucid.
 
    # deprecated
    Param("height", qr/\d+/)
+
+=head3 Options object validation
+
+The C<<< validate >>> method should be called on the result of C<<< getopt >>>.  This will
+check that all parameter prerequisites defined by C<<< needs >>> have been met.  It
+also takes a hashref of arguments.  The optional C<<< requires >>> argument gives an
+arrayref of parameters that must exist.
+
+The reason that object validation is done separate from C<<< getopt >>> is to allow
+for better control over different options that might be required or to allow
+some dependencies (i.e. from C<<< needs >>>) to be met via a configuration file.
+
+   @spec = (
+     Param("action")->needs(qw/user password/),
+     Param("user"),
+     Param("password"),
+   );
+   $opt = Getopt::Lucid->getopt(\@spec);
+   $opt->merge_defaults( read_config() ); # provides 'user' & 'password'
+   $opt->validate({requires => ['action']});
 
 =head2 Parsing the Command Line
 
@@ -1153,7 +1178,7 @@ For option names with dashes, underscores should be substitued in the accessor
 calls.  E.g.
 
    @spec = (
-     Param("--input-file|-i")->required(),
+     Param("--input-file|-i")
    );
  
    $opt = Getopt::Long->getopt( \@spec );
@@ -1323,15 +1348,48 @@ accessor code.  Avoid identical names with mixed dash and underscore styles.
 =head2 new()
 
   $opt = Getopt::Lucid->new( \@option_spec );
+  $opt = Getopt::Lucid->new( \@option_spec, \%parameters );
   $opt = Getopt::Lucid->new( \@option_spec, \@option_array );
+  $opt = Getopt::Lucid->new( \@option_spec, \@option_array, \%parameters );
 
 Creates a new Getopt::Lucid object.  An array reference to an option spec is
 required as an argument.  (See L</USAGE> for a description of the object spec).
 By default, objects will be set to read @ARGV for command line options. An
 optional second argument with a reference to an array will use that array for
-option processing instead.  For typical cases, users will likely prefer
-to call C<<< getopt >>> instead, which creates a new object and parses the command
-line with a single function call.
+option processing instead.  The final argument may be a hashref of parameters.
+The only valid parameter currently is:
+
+=over
+
+=item *
+
+strict -- enables strict mode when true
+
+=back
+
+For typical cases, users will likely prefer to call C<<< getopt >>> instead, which
+creates a new object and parses the command line with a single function call.
+
+=head2 validate()
+
+   $opt->validate();
+   $opt->validate( \%arguments );
+
+Takes an optional argument hashref, validates that all requirements and
+prerequisites are met or throws an error.  Valid argument keys are:
+
+=over
+
+=item *
+
+C<<< requires >>> -- an arrayref of options that must exist in the options
+object.
+
+=back
+
+This method returns the object for convenient chaining:
+
+   $opt = Getopt::Lucid->getopt(\@spec)->validate;
 
 =head2 append_defaults()
 
@@ -1419,6 +1477,29 @@ specification, recalculates the result of processing the command line with the
 restored defaults, and returns a hash with the resulting options.  This
 undoes the effect of a C<<< merge_defaults >>> or C<<< add_defaults >>> call.
 
+=head1 API CHANGES
+
+In 1.00, the following API changes have been made:
+
+=over
+
+=item *
+
+C<<< new() >>> now takes an optional hashref of parameters as the last
+argument
+
+=item *
+
+The global C<<< $STRICT >>> variable has been replaced with a per-object
+parameter C<<< strict >>>
+
+=item *
+
+The C<<< required >>> modifier has been removed and a new C<<< validate >>> method
+has been added to facilitate lateE<sol>custom checks of required options
+
+=back
+
 =head1 SEE ALSO
 
 =over
@@ -1454,13 +1535,32 @@ L<http://rt.cpan.org/Dist/Display.html?Queue=Getopt-Lucid>
 When submitting a bug or request, please include a test-file or a patch to an
 existing test-file that illustrates the bug or desired feature.
 
+=for :stopwords cpan testmatrix url annocpan anno bugtracker rt cpants kwalitee diff irc mailto metadata placeholders
+
+=head1 SUPPORT
+
+=head2 Bugs / Feature Requests
+
+Please report any bugs or feature requests through the issue tracker
+at L<http://rt.cpan.org/Public/Dist/Display.html?Name=Getopt-Lucid>.
+You will be notified automatically of any progress on your issue.
+
+=head2 Source Code
+
+This is open source software.  The code repository is available for
+public review and contribution under the terms of the license.
+
+L<https://github.com/dagolden/getopt-lucid>
+
+  git clone https://github.com/dagolden/getopt-lucid.git
+
 =head1 AUTHOR
 
 David Golden <dagolden@cpan.org>
 
 =head1 COPYRIGHT AND LICENSE
 
-This software is Copyright (c) 2010 by David Golden.
+This software is Copyright (c) 2011 by David Golden.
 
 This is free software, licensed under:
 

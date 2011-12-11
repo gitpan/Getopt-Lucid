@@ -1,18 +1,12 @@
 #!perl
-#
-# This file is part of Getopt-Lucid
-#
-# This software is Copyright (c) 2010 by David Golden.
-#
-# This is free software, licensed under:
-#
-#   The Apache License, Version 2.0, January 2004
-#
 
 use strict;
 use warnings;
 
 use Test::More;
+
+
+
 use File::Find;
 use File::Temp qw{ tempdir };
 
@@ -30,7 +24,18 @@ find(
   'lib',
 );
 
-my @scripts = glob "bin/*";
+my @scripts;
+if ( -d 'bin' ) {
+    find(
+      sub {
+        return unless -f;
+        my $found = $File::Find::name;
+        # nothing to skip
+        push @scripts, $found;
+      },
+      'bin',
+    );
+}
 
 my $plan = scalar(@modules) + scalar(@scripts);
 $plan ? (plan tests => $plan) : (plan skip_all => "no tests to run");
