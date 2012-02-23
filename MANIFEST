@@ -26,6 +26,7 @@ t/09-negation.t
 t/10-default-validation.t
 t/ErrorMessages.pm
 xt/author/critic.t
+xt/author/pod-spell.t
 xt/release/distmeta.t
 xt/release/pod-coverage.t
 xt/release/pod-syntax.t

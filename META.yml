@@ -12,7 +12,7 @@ build_requires:
 configure_requires:
   ExtUtils::MakeMaker: 6.30
 dynamic_config: 0
-generated_by: 'Dist::Zilla version 4.300003, CPAN::Meta::Converter version 2.112580'
+generated_by: 'Dist::Zilla version 4.300009, CPAN::Meta::Converter version 2.120351'
 license: apache
 meta-spec:
   url: http://module-build.sourceforge.net/META-spec-v1.4.html
@@ -29,13 +29,13 @@ no_index:
 provides:
   Getopt::Lucid:
     file: lib/Getopt/Lucid.pm
-    version: 1.00
+    version: 1.01
   Getopt::Lucid::Exception:
     file: lib/Getopt/Lucid/Exception.pm
-    version: 1.00
+    version: 1.01
   Getopt::Lucid::Spec:
     file: lib/Getopt/Lucid.pm
-    version: 1.00
+    version: 1.01
 requires:
   Carp: 0
   Exception::Class: 1.23
@@ -48,4 +48,4 @@ resources:
   bugtracker: http://rt.cpan.org/Public/Dist/Display.html?Name=Getopt-Lucid
   homepage: https://github.com/dagolden/getopt-lucid
   repository: https://github.com/dagolden/getopt-lucid.git
-version: 1.00
+version: 1.01

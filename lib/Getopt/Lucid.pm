@@ -3,7 +3,7 @@ use strict;
 use warnings;
 package Getopt::Lucid;
 # ABSTRACT: Clear, readable syntax for command line processing
-our $VERSION = '1.00'; # VERSION
+our $VERSION = '1.01'; # VERSION
 
 our @EXPORT_OK = qw(Switch Counter Param List Keypair);
 our %EXPORT_TAGS = ( all => [ @EXPORT_OK ] );
@@ -226,13 +226,19 @@ BEGIN { *getopts = \&getopt }; # handy alias
 
 sub validate {
   my ($self, $arg) = @_;
-  throw_usage("Getopt::Lucid->validate() takes an optional hashref argument")
-    unless $arg && ref($arg) eq 'HASH';
+  throw_usage("Getopt::Lucid->validate() takes a hashref argument")
+    if $arg && ref($arg) ne 'HASH';
 
-  for my $p ( @{$arg->{requires}} ) {
-      throw_argv("Required option '$self->{spec}{$p}{canon}' not found")
-          if ( ! $self->{seen}{$p} );
+  if ( $arg && exists $arg->{requires} ) {
+    my $requires = $arg->{requires};
+    throw_usage("'validate' argument 'requires' must be an array reference")
+      if $requires && ref($requires) ne 'ARRAY';
+    for my $p ( @$requires ) {
+        throw_argv("Required option '$self->{spec}{$p}{canon}' not found")
+            if ( ! $self->{seen}{$p} );
+    }
   }
+
   _check_prereqs($self);
 
   return $self;
@@ -773,7 +779,7 @@ Getopt::Lucid - Clear, readable syntax for command line processing
 
 =head1 VERSION
 
-version 1.00
+version 1.01
 
 =head1 SYNOPSIS
 
@@ -832,7 +838,7 @@ Key features include:
 
 =item *
 
-Five option types: switches, counters, parameters, lists, and keypairs
+Five option types: switches, counters, parameters, lists, and key pairs
 
 =item *
 
@@ -871,7 +877,7 @@ user control of precedence
 Getopt::Lucid support three kinds of option styles: long-style ("--foo"),
 short-style ("-f") and bareword style ("foo").  Short-style options
 are automatically unbundled during command line processing if a single dash
-is followed by more than one letter (e.g. "-xzf" becomes "-x -z -f" ).
+is followed by more than one letter (e.g. C<<< -xzf >>> becomes C<<< -x -z -f >>> ).
 
 Each option is identified in the specification with a string consisting of the
 option "name" followed by zero or more "aliases", with any alias (and each
@@ -1046,7 +1052,7 @@ argument is needed.
 
 Validation happens in two stages.  First, individual parameters may have
 validation criteria added to them.  Second, the parsed options object may be
-validated by checking that all requirements or prerequires are met.
+validated by checking that all requirements collectively are met.
 
 =head3 Parameter validation
 
@@ -1064,7 +1070,7 @@ Validation is also applied to default values provided via the C<<< default() >>>
 modifier or later modified with C<<< append_defaults >>>, C<<< merge_defaults >>>, or
 C<<< replace_defaults >>>.  This ensures internal consistency.
 
-If no default is explictly provided, validation is only applied if the option
+If no default is explicitly provided, validation is only applied if the option
 appears on the command line. (In other words, the built-in defaults are always
 considered valid if the option does not appear.)  If this is not desired, the
 C<<< required >>> option to the C<<< validate >>> method should be used to force users to
@@ -1147,7 +1153,7 @@ sign and the list element or key immediately after the option name:
 
 As with all options, negation is processed in order, allowing a "reset" in
 the middle of command line processing.  This may be useful for those using
-command aliases who wish to "switch off" options in the alias.  E.g, in unix:
+command aliases who wish to "switch off" options in the alias.  E.g, in Unix:
 
    $ alias wibble = wibble.pl --verbose
    $ wibble --no-verbose
@@ -1174,7 +1180,7 @@ leading dashes. E.g.
    print $opt->get_test ? "True" : "False";
    $opt->set_test(1);
 
-For option names with dashes, underscores should be substitued in the accessor
+For option names with dashes, underscores should be substituted in the accessor
 calls.  E.g.
 
    @spec = (
@@ -1316,7 +1322,7 @@ program to respond differently to each class of exception.
 
 =head2 Ambiguous Cases and Gotchas
 
-=head3 One-character aliases and anycase
+=head3 One-character aliases and C<<< anycase >>>
 
    @spec = (
      Counter("verbose|v")->anycase,
@@ -1401,10 +1407,10 @@ defaults, recalculates the result of processing the command line with the
 revised defaults, and returns a hash with the resulting options.  Each
 keyE<sol>value pair in the passed hash is added to the stored defaults.  For Switch
 and Param options, the value in the passed hash will overwrite any
-pre-existing value.  For Counter options, the value is added to any
-pre-existing value.  For List options, the value (or values, if the value is an
+preexisting value.  For Counter options, the value is added to any
+preexisting value.  For List options, the value (or values, if the value is an
 array reference) will be pushed onto the end of the list of existing values.
-For Keypair options, the keypairs will be added to the existing hash,
+For Keypair options, the keyE<sol>value pairs will be added to the existing hash,
 overwriting existing keyE<sol>value pairs (just like merging two hashes).  Keys
 which are not valid names from the options specification will be ignored.
 
@@ -1438,7 +1444,7 @@ Takes a hash or hash reference of new default values, modifies the stored
 defaults, recalculates the result of processing the command line with the
 revised defaults, and returns a hash with the resulting options.  Each
 keyE<sol>value pair in the passed hash is added to the stored defaults, overwriting
-any pre-existing value.  Keys which are not valid names from the options
+any preexisting value.  Keys which are not valid names from the options
 specification will be ignored.
 
 =head2 names()
@@ -1560,7 +1566,7 @@ David Golden <dagolden@cpan.org>
 
 =head1 COPYRIGHT AND LICENSE
 
-This software is Copyright (c) 2011 by David Golden.
+This software is Copyright (c) 2012 by David Golden.
 
 This is free software, licensed under:
 

@@ -3,7 +3,7 @@ use strict;
 use warnings;
 package Getopt::Lucid::Exception;
 # ABSTRACT: Exception classes for Getopt::Lucid
-our $VERSION = '1.00'; # VERSION
+our $VERSION = '1.01'; # VERSION
 
 use Exception::Class 1.23 (
     "Getopt::Lucid::Exception" => {
@@ -48,7 +48,7 @@ Getopt::Lucid::Exception - Exception classes for Getopt::Lucid
 
 =head1 VERSION
 
-version 1.00
+version 1.01
 
 =head1 AUTHOR
 
@@ -56,7 +56,7 @@ David Golden <dagolden@cpan.org>
 
 =head1 COPYRIGHT AND LICENSE
 
-This software is Copyright (c) 2011 by David Golden.
+This software is Copyright (c) 2012 by David Golden.
 
 This is free software, licensed under:
 
