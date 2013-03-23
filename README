@@ -2,7 +2,7 @@ NAME
     Getopt::Lucid - Clear, readable syntax for command line processing
 
 VERSION
-    version 1.01
+    version 1.02
 
 SYNOPSIS
        use Getopt::Lucid qw( :all );
@@ -646,7 +646,7 @@ BUGS
 SUPPORT
   Bugs / Feature Requests
     Please report any bugs or feature requests through the issue tracker at
-    <http://rt.cpan.org/Public/Dist/Display.html?Name=Getopt-Lucid>. You
+    <https://rt.cpan.org/Public/Dist/Display.html?Name=Getopt-Lucid>. You
     will be notified automatically of any progress on your issue.
 
   Source Code
@@ -655,13 +655,16 @@ SUPPORT
 
     <https://github.com/dagolden/getopt-lucid>
 
-      git clone https://github.com/dagolden/getopt-lucid.git
+      git clone git://github.com/dagolden/getopt-lucid.git
 
 AUTHOR
     David Golden <dagolden@cpan.org>
 
+CONTRIBUTOR
+    Robert Bohne <rbo@cpan.org>
+
 COPYRIGHT AND LICENSE
-    This software is Copyright (c) 2012 by David Golden.
+    This software is Copyright (c) 2013 by David Golden.
 
     This is free software, licensed under:
 

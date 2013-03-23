@@ -14,6 +14,7 @@ lib/Getopt/Lucid/Exception.pm
 perlcritic.rc
 t/00-compile.t
 t/00-new.t
+t/00-report-prereqs.t
 t/01-exceptions.t
 t/02-getopt.t
 t/03-getopt-notargv.t
@@ -28,6 +29,7 @@ t/ErrorMessages.pm
 xt/author/critic.t
 xt/author/pod-spell.t
 xt/release/distmeta.t
+xt/release/minimum-version.t
 xt/release/pod-coverage.t
 xt/release/pod-syntax.t
 xt/release/portability.t
