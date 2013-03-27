@@ -2,7 +2,7 @@ NAME
     Getopt::Lucid - Clear, readable syntax for command line processing
 
 VERSION
-    version 1.03
+    version 1.04
 
 SYNOPSIS
        use Getopt::Lucid qw( :all );
@@ -203,14 +203,6 @@ USAGE
          Keypair("define")->default( arch => "i386" ),
        );
 
-   required()
-    Indicates that the option *must* appear on the command line or else an
-    exception is thrown. No argument is needed.
-
-       @spec = (
-         Param("input")->required(),
-       );
-
    needs()
     Takes as an argument a list of option names or aliases of dependencies.
     If the option this modifies appears on the command line, each of the
@@ -358,7 +350,7 @@ USAGE
          Keypair("--define|-D"),
        );
  
-       $opt = Getopt::Long->getopt( \@spec );
+       $opt = Getopt::Lucid->getopt( \@spec );
        print $opt->get_test ? "True" : "False";
        $opt->set_test(1);
 
@@ -369,7 +361,7 @@ USAGE
          Param("--input-file|-i")
        );
  
-       $opt = Getopt::Long->getopt( \@spec );
+       $opt = Getopt::Lucid->getopt( \@spec );
        print $opt->get_input_file;
 
     This can create an ambiguous case if a similar option exists with
@@ -660,8 +652,12 @@ SUPPORT
 AUTHOR
     David Golden <dagolden@cpan.org>
 
-CONTRIBUTOR
-    Robert Bohne <rbo@cpan.org>
+CONTRIBUTORS
+    *   Kevin McGrath <kmcgrath@cpan.org>
+
+    *   Nick Patch <patch@cpan.org>
+
+    *   Robert Bohne <rbo@cpan.org>
 
 COPYRIGHT AND LICENSE
     This software is Copyright (c) 2013 by David Golden.

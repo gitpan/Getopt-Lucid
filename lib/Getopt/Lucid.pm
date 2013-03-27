@@ -3,7 +3,7 @@ use strict;
 use warnings;
 package Getopt::Lucid;
 # ABSTRACT: Clear, readable syntax for command line processing
-our $VERSION = '1.03'; # VERSION
+our $VERSION = '1.04'; # VERSION
 
 our @EXPORT_OK = qw(Switch Counter Param List Keypair);
 our %EXPORT_TAGS = ( all => [ @EXPORT_OK ] );
@@ -422,6 +422,10 @@ sub _keypair {
     }
     else {
         my $value = defined $val ? $val : shift @{$self->{target}};
+        if (! defined $val && ! defined $value) {
+            throw_argv("Option '$self->{spec}{$arg}{canon}' requires a value");
+        }
+
         throw_argv("Badly formed keypair for '$self->{spec}{$arg}{canon}'")
             unless $value =~ /[^=]+=.+/;
         ($key, $data) = ( $value =~ /^([^=]*)=(.*)$/ ) ;
@@ -444,7 +448,13 @@ sub _list {
     }
     else {
         $value = defined $val ? $val : shift @{$self->{target}};
-        $value =~ s/^$NEGATIVE(.*)$/$1/ if ! defined $val;
+        if (! defined $val) {
+            if (! defined $value) {
+                throw_argv("Option '$self->{spec}{$arg}{canon}' requires a value");
+            }
+            $value =~ s/^$NEGATIVE(.*)$/$1/;
+        }
+
         throw_argv("Ambiguous value for $self->{spec}{$arg}{canon} could be option: $value")
             if ! defined $val and _find_arg($self, $value);
         throw_argv("Invalid list option $self->{spec}{$arg}{canon} = $value")
@@ -466,9 +476,12 @@ sub _parameter {
     }
     else {
         $value = defined $val ? $val : shift @{$self->{target}};
-        $value =~ s/^$NEGATIVE(.*)$/$1/ if defined $value && ! defined $val;
-        throw_argv("Missing value for $self->{spec}{$arg}{canon}")
-            if ! defined $value;
+        if (! defined $val) {
+            if (! defined $value) {
+                throw_argv("Option '$self->{spec}{$arg}{canon}' requires a value");
+            }
+            $value =~ s/^$NEGATIVE(.*)$/$1/;
+        }
         throw_argv("Ambiguous value for $self->{spec}{$arg}{canon} could be option: $value")
             if ! defined $val and _find_arg($self, $value);
         throw_argv("Invalid parameter $self->{spec}{$arg}{canon} = $value")
@@ -784,7 +797,7 @@ Getopt::Lucid - Clear, readable syntax for command line processing
 
 =head1 VERSION
 
-version 1.03
+version 1.04
 
 =head1 SYNOPSIS
 
@@ -1022,15 +1035,6 @@ array or hash, respectively.
      Keypair("define")->default( arch => "i386" ),
    );
 
-=head3 required()
-
-Indicates that the option I<must> appear on the command
-line or else an exception is thrown.  No argument is needed.
-
-   @spec = (
-     Param("input")->required(),
-   );
-
 =head3 needs()
 
 Takes as an argument a list of option names or aliases of
@@ -1181,7 +1185,7 @@ leading dashes. E.g.
      Keypair("--define|-D"),
    );
  
-   $opt = Getopt::Long->getopt( \@spec );
+   $opt = Getopt::Lucid->getopt( \@spec );
    print $opt->get_test ? "True" : "False";
    $opt->set_test(1);
 
@@ -1192,7 +1196,7 @@ calls.  E.g.
      Param("--input-file|-i")
    );
  
-   $opt = Getopt::Long->getopt( \@spec );
+   $opt = Getopt::Lucid->getopt( \@spec );
    print $opt->get_input_file;
 
 This can create an ambiguous case if a similar option exists with underscores
@@ -1569,9 +1573,23 @@ L<https://github.com/dagolden/getopt-lucid>
 
 David Golden <dagolden@cpan.org>
 
-=head1 CONTRIBUTOR
+=head1 CONTRIBUTORS
+
+=over 4
+
+=item *
+
+Kevin McGrath <kmcgrath@cpan.org>
+
+=item *
+
+Nick Patch <patch@cpan.org>
+
+=item *
 
 Robert Bohne <rbo@cpan.org>
+
+=back
 
 =head1 COPYRIGHT AND LICENSE
 
