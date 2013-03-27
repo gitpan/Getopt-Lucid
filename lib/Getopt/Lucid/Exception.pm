@@ -3,7 +3,7 @@ use strict;
 use warnings;
 package Getopt::Lucid::Exception;
 # ABSTRACT: Exception classes for Getopt::Lucid
-our $VERSION = '1.02'; # VERSION
+our $VERSION = '1.03'; # VERSION
 
 use Exporter;
 our @ISA = qw/Exporter Exception::Class::Base/;
@@ -46,13 +46,15 @@ __END__
 
 =pod
 
+=encoding utf-8
+
 =head1 NAME
 
 Getopt::Lucid::Exception - Exception classes for Getopt::Lucid
 
 =head1 VERSION
 
-version 1.02
+version 1.03
 
 =for Pod::Coverage description
 throw_argv

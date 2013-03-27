@@ -32,13 +32,13 @@ no_index:
 provides:
   Getopt::Lucid:
     file: lib/Getopt/Lucid.pm
-    version: 1.02
+    version: 1.03
   Getopt::Lucid::Exception:
     file: lib/Getopt/Lucid/Exception.pm
-    version: 1.02
+    version: 1.03
   Getopt::Lucid::Spec:
     file: lib/Getopt/Lucid.pm
-    version: 1.02
+    version: 1.03
 requires:
   Carp: 0
   Exception::Class: 1.23
@@ -51,6 +51,6 @@ resources:
   bugtracker: https://rt.cpan.org/Public/Dist/Display.html?Name=Getopt-Lucid
   homepage: https://metacpan.org/release/Getopt-Lucid
   repository: git://github.com/dagolden/getopt-lucid.git
-version: 1.02
+version: 1.03
 x_contributors:
   - 'Robert Bohne <rbo@cpan.org>'

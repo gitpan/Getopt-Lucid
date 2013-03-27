@@ -3,7 +3,7 @@ use strict;
 use warnings;
 package Getopt::Lucid;
 # ABSTRACT: Clear, readable syntax for command line processing
-our $VERSION = '1.02'; # VERSION
+our $VERSION = '1.03'; # VERSION
 
 our @EXPORT_OK = qw(Switch Counter Param List Keypair);
 our %EXPORT_TAGS = ( all => [ @EXPORT_OK ] );
@@ -466,7 +466,9 @@ sub _parameter {
     }
     else {
         $value = defined $val ? $val : shift @{$self->{target}};
-        $value =~ s/^$NEGATIVE(.*)$/$1/ if ! defined $val;
+        $value =~ s/^$NEGATIVE(.*)$/$1/ if defined $value && ! defined $val;
+        throw_argv("Missing value for $self->{spec}{$arg}{canon}")
+            if ! defined $value;
         throw_argv("Ambiguous value for $self->{spec}{$arg}{canon} could be option: $value")
             if ! defined $val and _find_arg($self, $value);
         throw_argv("Invalid parameter $self->{spec}{$arg}{canon} = $value")
@@ -774,13 +776,15 @@ __END__
 
 =pod
 
+=encoding utf-8
+
 =head1 NAME
 
 Getopt::Lucid - Clear, readable syntax for command line processing
 
 =head1 VERSION
 
-version 1.02
+version 1.03
 
 =head1 SYNOPSIS
 
