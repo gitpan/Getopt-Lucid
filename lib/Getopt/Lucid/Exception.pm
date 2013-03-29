@@ -3,7 +3,7 @@ use strict;
 use warnings;
 package Getopt::Lucid::Exception;
 # ABSTRACT: Exception classes for Getopt::Lucid
-our $VERSION = '1.04'; # VERSION
+our $VERSION = '1.05'; # VERSION
 
 use Exporter;
 our @ISA = qw/Exporter Exception::Class::Base/;
@@ -28,16 +28,15 @@ use Exception::Class 1.23 (
 
 );
 
-sub throw_spec {
-    Getopt::Lucid::Exception::Spec->throw("$_[0]\n");
-}
+my %throwers = (
+    throw_spec => "Getopt::Lucid::Exception::Spec",
+    throw_argv => "Getopt::Lucid::Exception::ARGV",
+    throw_usage => "Getopt::Lucid::Exception::Usage",
+);
 
-sub throw_argv {
-    Getopt::Lucid::Exception::ARGV->throw("$_[0]\n");
-}
-
-sub throw_usage {
-    Getopt::Lucid::Exception::Usage->throw("$_[0]\n");
+for my $t ( keys %throwers ) {
+    no strict 'refs';
+    *{$t} = sub { $throwers{$t}->throw("$_[0]\n") };
 }
 
 1;
@@ -54,7 +53,7 @@ Getopt::Lucid::Exception - Exception classes for Getopt::Lucid
 
 =head1 VERSION
 
-version 1.04
+version 1.05
 
 =for Pod::Coverage description
 throw_argv

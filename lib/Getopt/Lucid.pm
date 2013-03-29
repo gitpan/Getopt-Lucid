@@ -3,7 +3,7 @@ use strict;
 use warnings;
 package Getopt::Lucid;
 # ABSTRACT: Clear, readable syntax for command line processing
-our $VERSION = '1.04'; # VERSION
+our $VERSION = '1.05'; # VERSION
 
 our @EXPORT_OK = qw(Switch Counter Param List Keypair);
 our %EXPORT_TAGS = ( all => [ @EXPORT_OK ] );
@@ -797,7 +797,7 @@ Getopt::Lucid - Clear, readable syntax for command line processing
 
 =head1 VERSION
 
-version 1.04
+version 1.05
 
 =head1 SYNOPSIS
 
